@@ -1,0 +1,3 @@
+0da7488bdf4253aad03e39bb781d52628a04bfd4e59a014365db96ccac5ea73a  models/intent_v4b_plus/best.pt
+2becfa7a8828f5a3f608e71edf6a395fb37bd3f6184e966c08da4913192c5854  models/marvin_v4/best.pt
+53934f3f477d7e969170aa2106b97d84abf7fadfc0a2873777165a268ea21462  models/marvin_v4/marvin_v4.ts

@@ -1,0 +1,3 @@
+[submodule "vcm-benchmark"]
+	path = vcm-benchmark
+	url = https://github.com/airimonda/vcm-benchmark.git

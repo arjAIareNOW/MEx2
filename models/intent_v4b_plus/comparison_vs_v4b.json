@@ -1,0 +1,70 @@
+{
+  "V4-B+ (this run)": {
+    "parameters": 203155,
+    "validation": {
+      "accuracy": 0.959404600811908,
+      "macro_f1": 0.9452893296103375,
+      "weighted_f1": 0.959266023801623,
+      "macro_precision": 0.9447735450601021,
+      "macro_recall": 0.9467705814870072
+    },
+    "test": {
+      "accuracy": 0.9567208610029768,
+      "macro_f1": 0.9403220913173493,
+      "weighted_f1": 0.9566411892000414,
+      "macro_precision": 0.9415817997603708,
+      "macro_recall": 0.9395669117920857
+    },
+    "holdout": {
+      "accuracy": 0.9086021505376344,
+      "macro_f1": 0.8899036328399209,
+      "weighted_f1": 0.9132333427749387,
+      "macro_precision": 0.9234143049932524,
+      "macro_recall": 0.8859649122807017
+    }
+  },
+  "V4-B final (scored in this run)": {
+    "test": {
+      "accuracy": 0.8896267460499199,
+      "macro_f1": 0.8576383795346842,
+      "weighted_f1": 0.8902868917529058,
+      "macro_precision": 0.8691165226704811,
+      "macro_recall": 0.8582740954472425
+    },
+    "holdout": {
+      "accuracy": 0.7311827956989247,
+      "macro_f1": 0.7121298586547162,
+      "weighted_f1": 0.7555166610815595,
+      "macro_precision": 0.8037875749257533,
+      "macro_recall": 0.7251461988304094
+    }
+  },
+  "V4-B final": {
+    "parameters": 69491,
+    "validation": {
+      "accuracy": 0.8795669824086604,
+      "macro_f1": 0.8489438588205441,
+      "weighted_f1": 0.8805054760349287,
+      "macro_precision": 0.8628921028201267,
+      "macro_recall": 0.8541557376157872
+    },
+    "test": "PENDING_FINAL_TEST_EVALUATION"
+  },
+  "V4-B vcm_tc_dscnn_v4_b_19class_retrain_64880": {
+    "parameters": 69491,
+    "validation": {
+      "accuracy": 0.8795669824086604,
+      "macro_f1": 0.8489438588205441,
+      "weighted_f1": 0.8805054760349287,
+      "macro_precision": 0.8628921028201267,
+      "macro_recall": 0.8541557376157872
+    },
+    "test": {
+      "accuracy": 0.8896267460499199,
+      "macro_f1": 0.8576383795346842,
+      "weighted_f1": 0.8902868917529058,
+      "macro_precision": 0.8691165226704811,
+      "macro_recall": 0.8582740954472425
+    }
+  }
+}

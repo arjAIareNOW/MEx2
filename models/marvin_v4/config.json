@@ -1,0 +1,276 @@
+{
+  "experiment": "MARVIN V4",
+  "family": "residual DSCNN + SE",
+  "args": {
+    "data": "<PROJECT>/dataset/speech_commands",
+    "extra_noise_dir": "<PROJECT>/dataset/noise/demand/wav16k",
+    "output": "<PROJECT>/models/marvin_v4_64883",
+    "baseline": "<PROJECT>/models/marvin_exp2_ratio1to2_60ep",
+    "v3": "<PROJECT>/models/marvin_v3",
+    "device": "cuda",
+    "epochs": 100,
+    "warmup_epochs": 3,
+    "batch_size": 128,
+    "learning_rate": 0.003,
+    "weight_decay": 0.01,
+    "label_smoothing": 0.05,
+    "negative_ratio": 4,
+    "noise_fraction": 0.25,
+    "ema_decay": 0.998,
+    "patience": 25,
+    "width": 48,
+    "dropout": 0.2,
+    "workers": 6,
+    "seed": 1337,
+    "cpu_threads": 2,
+    "validation_far_cap": 0.0025,
+    "smoke": false
+  },
+  "features": {
+    "sample_rate": 16000,
+    "mono": true,
+    "pcm_bits": 16,
+    "clip_samples": 16000,
+    "n_mels": 40,
+    "n_fft": 512,
+    "win_length": 400,
+    "hop_length": 160,
+    "f_min": 20,
+    "f_max": 7600,
+    "window": "periodic Hann",
+    "stft_center": false,
+    "power": 2,
+    "mel_bank": "V2 discrete-bin HTK triangular bank",
+    "log": "natural logarithm, floor 1e-10",
+    "normalization": "per-window mean / sample standard deviation, floor 1e-5",
+    "evaluation_fit": "center pad/crop to 16000; no augmentation",
+    "training_fit": "random pad/crop to 16000, as V2"
+  },
+  "augmentation": {
+    "speed_perturbation": {
+      "probability": 0.5,
+      "factor": [
+        0.9,
+        1.1
+      ],
+      "method": "linear resampling"
+    },
+    "time_shift": {
+      "probability": 0.5,
+      "ms": [
+        -100,
+        100
+      ],
+      "mode": "zero-filled"
+    },
+    "gain": {
+      "probability": 0.5,
+      "db": [
+        -6,
+        6
+      ]
+    },
+    "noise": {
+      "probability": 0.8,
+      "snr_db": [
+        0,
+        20
+      ],
+      "sources": "Speech Commands _background_noise_ + DEMAND 16 kHz"
+    },
+    "spec_augment": {
+      "freq_masks": 1,
+      "freq_width_max": 6,
+      "time_masks": 1,
+      "time_width_max": 12
+    },
+    "noise_only_negatives_per_epoch": "0.25 x positives (pure background, label 0)",
+    "training_only": true
+  },
+  "architecture": "MarvinV4(\n  (stem): Sequential(\n    (0): Conv2d(1, 48, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), bias=False)\n    (1): BatchNorm2d(48, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)\n    (2): ReLU()\n  )\n  (blocks): Sequential(\n    (0): ResidualDSBlock(\n      (depthwise): Conv2d(48, 48, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=48, bias=False)\n      (dn): BatchNorm2d(48, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)\n      (pointwise): Conv2d(48, 48, kernel_size=(1, 1), stride=(1, 1), bias=False)\n      (pn): BatchNorm2d(48, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)\n      (se): SqueezeExcitation(\n        (reduce): Conv2d(48, 12, kernel_size=(1, 1), stride=(1, 1))\n        (expand): Conv2d(12, 48, kernel_size=(1, 1), stride=(1, 1))\n      )\n      (skip): Identity()\n    )\n    (1): ResidualDSBlock(\n      (depthwise): Conv2d(48, 48, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1), groups=48, bias=False)\n      (dn): BatchNorm2d(48, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)\n      (pointwise): Conv2d(48, 96, kernel_size=(1, 1), stride=(1, 1), bias=False)\n      (pn): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)\n      (se): SqueezeExcitation(\n        (reduce): Conv2d(96, 24, kernel_size=(1, 1), stride=(1, 1))\n        (expand): Conv2d(24, 96, kernel_size=(1, 1), stride=(1, 1))\n      )\n      (skip): Sequential(\n        (0): Conv2d(48, 96, kernel_size=(1, 1), stride=(2, 2), bias=False)\n        (1): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)\n      )\n    )\n    (2): ResidualDSBlock(\n      (depthwise): Conv2d(96, 96, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=96, bias=False)\n      (dn): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)\n      (pointwise): Conv2d(96, 96, kernel_size=(1, 1), stride=(1, 1), bias=False)\n      (pn): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)\n      (se): SqueezeExcitation(\n        (reduce): Conv2d(96, 24, kernel_size=(1, 1), stride=(1, 1))\n        (expand): Conv2d(24, 96, kernel_size=(1, 1), stride=(1, 1))\n      )\n      (skip): Identity()\n    )\n    (3): ResidualDSBlock(\n      (depthwise): Conv2d(96, 96, kernel_size=(3, 3), stride=(1, 1), padding=(2, 2), dilation=(2, 2), groups=96, bias=False)\n      (dn): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)\n      (pointwise): Conv2d(96, 96, kernel_size=(1, 1), stride=(1, 1), bias=False)\n      (pn): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)\n      (se): SqueezeExcitation(\n        (reduce): Conv2d(96, 24, kernel_size=(1, 1), stride=(1, 1))\n        (expand): Conv2d(24, 96, kernel_size=(1, 1), stride=(1, 1))\n      )\n      (skip): Identity()\n    )\n    (4): ResidualDSBlock(\n      (depthwise): Conv2d(96, 96, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=96, bias=False)\n      (dn): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)\n      (pointwise): Conv2d(96, 96, kernel_size=(1, 1), stride=(1, 1), bias=False)\n      (pn): BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)\n      (se): SqueezeExcitation(\n        (reduce): Conv2d(96, 24, kernel_size=(1, 1), stride=(1, 1))\n        (expand): Conv2d(24, 96, kernel_size=(1, 1), stride=(1, 1))\n      )\n      (skip): Identity()\n    )\n  )\n  (dropout): Dropout(p=0.2, inplace=False)\n  (classifier): Linear(in_features=192, out_features=1, bias=True)\n)",
+  "parameters": 65293,
+  "raw_float32_parameter_bytes": 261172,
+  "noise_sources": {
+    "speech_commands": 6,
+    "extra": 6800,
+    "combined": 6806
+  },
+  "training": {
+    "optimizer": "AdamW",
+    "weight_decay": 0.01,
+    "loss": "BCEWithLogits, label smoothing 0.05",
+    "schedule": "3-epoch linear warmup, per-step cosine",
+    "ema_decay": 0.998,
+    "ratio": "1 MARVIN : 4 non-MARVIN + 428 noise-only negatives/epoch",
+    "negatives": "seeded full-pool cycling; no excluded words",
+    "steps_per_epoch": 71,
+    "checkpoint_selection": "EMA model, validation F1 at validation-only FAR-constrained threshold",
+    "threshold_selection": "maximum validation F1 subject to FAR<=cap; ties recall then fewer FP"
+  },
+  "streaming": {
+    "window_ms": 1000,
+    "stride_ms": 100,
+    "consecutive_hits": 2,
+    "cooldown_ms": 1000,
+    "replay_offsets_ms": [
+      0,
+      250,
+      500,
+      750
+    ],
+    "replay_duration_ms": 2000,
+    "context": "zero silence only",
+    "score": "max over adjacent pairs of min(sigmoid logits)",
+    "metric_unit": "recording-placement event; NOT clip FAR or real-world FAR/hour",
+    "latency_note": "recording end is not verified speech end"
+  },
+  "split_audit": {
+    "dataset": "TensorFlow Speech Commands v0.02",
+    "splits": {
+      "train": {
+        "examples": 84843,
+        "marvin": 1710,
+        "non_marvin": 83133,
+        "speakers": 2112,
+        "membership_sha256": "07946b7b42c4b15b7a048b10c20ef5f4a35ad0332ce425ddb1ee34acbe3c6884",
+        "words": {
+          "backward": 1346,
+          "bed": 1594,
+          "bird": 1697,
+          "cat": 1657,
+          "dog": 1711,
+          "down": 3134,
+          "eight": 3033,
+          "five": 3240,
+          "follow": 1275,
+          "forward": 1256,
+          "four": 2955,
+          "go": 3106,
+          "happy": 1632,
+          "house": 1727,
+          "learn": 1286,
+          "left": 3037,
+          "marvin": 1710,
+          "nine": 3170,
+          "no": 3130,
+          "off": 2970,
+          "on": 3086,
+          "one": 3140,
+          "right": 3019,
+          "seven": 3205,
+          "sheila": 1606,
+          "six": 3088,
+          "stop": 3111,
+          "three": 2966,
+          "tree": 1407,
+          "two": 3111,
+          "up": 2948,
+          "visual": 1288,
+          "wow": 1724,
+          "yes": 3228,
+          "zero": 3250
+        }
+      },
+      "validation": {
+        "examples": 9981,
+        "marvin": 195,
+        "non_marvin": 9786,
+        "speakers": 256,
+        "membership_sha256": "b8cc815653f7ed138eb4d0de3c962ca90750ca413b37b6d977d8c706a0fd3413",
+        "words": {
+          "backward": 153,
+          "bed": 213,
+          "bird": 182,
+          "cat": 180,
+          "dog": 197,
+          "down": 377,
+          "eight": 346,
+          "five": 367,
+          "follow": 132,
+          "forward": 146,
+          "four": 373,
+          "go": 372,
+          "happy": 219,
+          "house": 195,
+          "learn": 128,
+          "left": 352,
+          "marvin": 195,
+          "nine": 356,
+          "no": 406,
+          "off": 373,
+          "on": 363,
+          "one": 351,
+          "right": 363,
+          "seven": 387,
+          "sheila": 204,
+          "six": 378,
+          "stop": 350,
+          "three": 356,
+          "tree": 159,
+          "two": 345,
+          "up": 350,
+          "visual": 139,
+          "wow": 193,
+          "yes": 397,
+          "zero": 384
+        }
+      },
+      "test": {
+        "examples": 11005,
+        "marvin": 195,
+        "non_marvin": 10810,
+        "speakers": 250,
+        "membership_sha256": "e13dcc92906b76c0cfb35f9eea83840fb7d571cde7b5ed9b584051e8176a3e88",
+        "words": {
+          "backward": 165,
+          "bed": 207,
+          "bird": 185,
+          "cat": 194,
+          "dog": 220,
+          "down": 406,
+          "eight": 408,
+          "five": 445,
+          "follow": 172,
+          "forward": 155,
+          "four": 400,
+          "go": 402,
+          "happy": 203,
+          "house": 191,
+          "learn": 161,
+          "left": 412,
+          "marvin": 195,
+          "nine": 408,
+          "no": 405,
+          "off": 402,
+          "on": 396,
+          "one": 399,
+          "right": 396,
+          "seven": 406,
+          "sheila": 212,
+          "six": 394,
+          "stop": 411,
+          "three": 405,
+          "tree": 193,
+          "two": 424,
+          "up": 425,
+          "visual": 165,
+          "wow": 206,
+          "yes": 419,
+          "zero": 418
+        }
+      }
+    },
+    "speaker_overlap": {
+      "train/validation": 0,
+      "train/test": 0,
+      "validation/test": 0
+    },
+    "official_list_sha256": {
+      "validation_list.txt": "5747407275538b4056e823982f0db1fc993776ab532048196a19be701bdc87d2",
+      "testing_list.txt": "2d17c6b3faf63be43eda93cfeb0c747cfd79b7b236282039dbac65a2cb5f1df5"
+    },
+    "test_metadata_only_before_final_selection": true
+  },
+  "baseline_checkpoint_sha256": "9cd50fb0a2a8ba17f1acdf49b035b11b44cd7cf85f5ed078e127b300663cd5f7",
+  "started": "2026-10-03T01:15:02.507273+00:00"
+}

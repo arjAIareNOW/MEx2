@@ -1,0 +1,48 @@
+{
+  "features": {
+    "sample_rate": 16000,
+    "mono": true,
+    "pcm_bits": 16,
+    "clip_samples": 16000,
+    "n_mels": 40,
+    "n_fft": 512,
+    "win_length": 400,
+    "hop_length": 160,
+    "f_min": 20,
+    "f_max": 7600,
+    "window": "periodic Hann",
+    "stft_center": false,
+    "power": 2,
+    "mel_bank": "V2 discrete-bin HTK triangular bank",
+    "log": "natural logarithm, floor 1e-10",
+    "normalization": "per-window mean / sample standard deviation, floor 1e-5",
+    "evaluation_fit": "center pad/crop to 16000; no augmentation",
+    "training_fit": "random pad/crop to 16000, as V2"
+  },
+  "streaming": {
+    "window_ms": 1000,
+    "stride_ms": 100,
+    "consecutive_hits": 2,
+    "cooldown_ms": 1000,
+    "replay_offsets_ms": [
+      0,
+      250,
+      500,
+      750
+    ],
+    "replay_duration_ms": 2000,
+    "context": "zero silence only",
+    "score": "max over adjacent pairs of min(sigmoid logits)",
+    "metric_unit": "recording-placement event; NOT clip FAR or real-world FAR/hour",
+    "latency_note": "recording end is not verified speech end"
+  },
+  "clip_threshold": 0.8334565162658691,
+  "streaming_threshold": 0.9094067811965942,
+  "architecture": "MarvinV4",
+  "model_config": {
+    "width": 48,
+    "dropout": 0.2
+  },
+  "runtime": "TorchScript CPU offline",
+  "raspberry_pi_performance": "not measured"
+}
