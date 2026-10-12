@@ -1,21 +1,22 @@
-# MEx2: "Marvin" wake word + voice-command intent model
+# MEx2: ELKIT, a voice-controlled smart device
 
-Two small on-device speech models for a Raspberry Pi voice assistant:
+On-device speech models for **ELKIT** (*Embedded Listening Keyword-based Intent Terminal*), a Raspberry Pi 5 voice assistant that runs fully offline:
 
-1. **MARVIN V4**: a wake-word detector that listens for the word *"marvin"*.
+1. **ELKIT wake word**: listens for *"Hi Elkit"* / *"Hello Elkit"*. This is the wake word the appliance uses. Its weights are not redistributed here (non-commercial training voices); the model, its tests and the test script are documented in [`elkit/`](elkit/README.md).
 2. **V4-B+**: an intent classifier that maps the spoken command after the wake word to one of **19 intents** (e.g. `TIMER`, `LIGHT_ON`, `WEATHER`).
+3. **Slot model** (V0 + DEMAND): picks the value for intents that need one (e.g. TIMER: 10 seconds / 30 seconds / 1 minute).
 
-The intent model only runs after the wake word fires.
+**MARVIN V4**, a wake word for the single word *"marvin"*, is the **shareable alternative** to ELKIT: it is MIT-licensed, included in full below, and runs in the same pipeline (the appliance has a switch between the two). The intent and slot models only run after a wake word fires.
 
-> **Status: partial release (2026-10-03).** Both models are trained and evaluated offline. Still to come: the **Raspberry Pi 5 on-device benchmark** (latency, RTF), the **ONNX export** of V4-B+, and an **out-of-scope reject threshold** for the intent model. Every number below was measured on the training server, not on a Pi.
+> **Status (2026-10-12).** All models are trained and evaluated. The **Raspberry Pi 5 on-device benchmark** is in [`pi-benchmark/`](pi-benchmark/README.md) (ONNX Runtime; p95 193 ms for a 5 s command, real-time factor 0.03), together with the ONNX models and an **out-of-scope reject threshold** for the intent model. Numbers in the tables below were measured on the training server unless marked Pi 5.
 
-| | Wake word: MARVIN V4 | Intent: V4-B+ |
-|---|---|---|
-| Task | binary: "marvin" vs. anything else | 19-class intent |
-| Parameters | 65,293 (0.065 M) | 203,155 (0.203 M) |
-| Weights | `models/marvin_v4/marvin_v4.ts` (TorchScript, 0.34 MB) + `best.pt` (0.30 MB) | `models/intent_v4b_plus/best.pt` (0.87 MB) |
-| Test result | F1 **0.961**, recall 0.944, false-accept rate **0.037 %** (4 / 10,810) | accuracy **0.957**, macro-F1 **0.940** |
-| Training data | TensorFlow Speech Commands v0.02 | ai231 voice-commands dataset |
+| | Wake word: **ELKIT** (deployed) | Intent: V4-B+ | Wake word: MARVIN V4 (alternative) |
+|---|---|---|---|
+| Task | "Hi/Hello Elkit" vs. anything else | 19-class intent | "marvin" vs. anything else |
+| Weights | not redistributed (see [`elkit/`](elkit/README.md)) | `models/intent_v4b_plus/best.pt` (0.87 MB); ONNX in `pi-benchmark/models/` | `models/marvin_v4/marvin_v4.ts` (0.34 MB) + `best.pt` (0.30 MB) |
+| Parameters | small head on the openWakeWord front end | 203,155 (0.203 M) | 65,293 (0.065 M) |
+| Test result | **91.1 %** of real-speaker phrases heard; false wakes on real speech **5.0 %** at the deployed setting (0.94, 2 readings in a row; 99 / 2,000 SLURP utterances) | accuracy **0.957**, macro-F1 **0.940** | F1 **0.961**, recall 0.944, false-accept rate **0.037 %** (4 / 10,810) |
+| Training data | generated voices (Piper + Meta MMS) | ai231 voice-commands dataset | TensorFlow Speech Commands v0.02 |
 
 ---
 
@@ -108,7 +109,9 @@ Each run writes `best.pt`, `config.json` (full hyper-parameters, environment and
 
 **Seeds and determinism:** the released runs used seed **1337** (wake word) and **23101** (intent; this seed also fixes the speaker split). cuDNN autotuning is on for speed, so a re-run reproduces the results closely but not bit for bit. For reference, an earlier run of the same intent recipe with a different checkpoint-selection rule reached test macro-F1 0.945.
 
-### 4. Optional: ONNX export and Pi benchmark (in progress)
+### 4. Optional: ONNX export and Pi benchmark
+
+The measured Pi 5 result and a self-contained benchmark (ONNX models included, no dataset needed) are in [`pi-benchmark/`](pi-benchmark/README.md). To export and benchmark your own run:
 
 ```bash
 python scripts/export_v4b_plus_onnx.py models/intent_v4b_plus            # -> v4b_plus.onnx
@@ -127,14 +130,16 @@ python scripts/benchmark_v4b_plus_pi.py models/intent_v4b_plus \
 | | |
 |---|---|
 | Author / team | arjAIareNOW |
-| Models | MARVIN V4 (wake word), then V4-B+ (intent) |
-| Datasets | ai231 voice commands (intent); Speech Commands v0.02 (wake word) |
-| Training | 1× NVIDIA A100 80GB PCIe, Slurm |
-| On-device validation target | Raspberry Pi 5 (8 GB): **pending** |
+| Models | ELKIT wake word (deployed; MARVIN V4 as the alternative), then V4-B+ (intent) + slot model |
+| Datasets | ai231 voice commands (intent); Speech Commands v0.02 (MARVIN); generated voices (ELKIT) |
+| Training | 1× NVIDIA A100 80GB PCIe (UPERDFI), Slurm |
+| On-device validation | Raspberry Pi 5 (8 GB): see [`pi-benchmark/`](pi-benchmark/README.md) |
 
 ### Model
 
-| | Wake word: MARVIN V4 | Intent: V4-B+ |
+The ELKIT wake word is described in [`elkit/README.md`](elkit/README.md). This table covers the intent model and MARVIN V4, the alternative wake word.
+
+| | Wake word: MARVIN V4 (alternative) | Intent: V4-B+ |
 |---|---|---|
 | Mic input | 16 kHz mono PCM16 | 16 kHz mono PCM16 |
 | Audio window | 1 s | up to 5 s (whole command) |
@@ -145,7 +150,7 @@ python scripts/benchmark_v4b_plus_pi.py models/intent_v4b_plus \
 | Slot head / actuator | none | none (intent only; slots are not predicted) |
 | Parameters | 65,293 | 203,155 |
 | Weights size | 0.30 MB (`best.pt`), 0.34 MB (TorchScript) | 0.87 MB (`best.pt`) |
-| Decision thresholds | single clip **0.8335**; streaming **0.9094** (both picked on validation only, false-accept cap 0.25 %) | arg-max over 19 classes (reject threshold pending) |
+| Decision thresholds | single clip **0.8335**; streaming **0.9094** (both picked on validation only, false-accept cap 0.25 %) | arg-max over 19 classes; out-of-scope when the top probability is below **0.456** (keeps 95 % of in-scope validation commands) |
 
 **19 intents:** ALARM, BRIGHTNESS, CALL, COLOR, CREATE_REMINDER, LIGHT_OFF, LIGHT_ON, LIST_REMINDERS, MESSAGE, NEXT, PAUSE, PLAY_MUSIC, STOP, TEMPERATURE, TIME, TIMER, VOLUME_DOWN, VOLUME_UP, WEATHER.
 
@@ -186,14 +191,14 @@ No speaker overlap between splits. All 34 other words act as negatives, includin
 | Wall-clock | 26 min training (35 min job) | 36 min |
 | Seed | 1337 | 23101 |
 
-### Validation (offline; Raspberry Pi 5 numbers pending)
+### Validation
 
-| | Wake word: MARVIN V4 | Intent: V4-B+ |
-|---|---|---|
-| Accuracy | F1 0.961, recall 0.944, precision 0.979 | test: acc 0.957, macro-F1 0.940; holdout: acc 0.909, macro-F1 0.890 |
-| False-accept rate | single clip: **0.037 %** (4 / 10,810); streaming replay: 0.032 %, recall 0.915 | out-of-scope rejection: **pending** (no reject threshold yet) |
-| Latency p95 / RTF | pending (Pi 5) | pending (Pi 5) |
-| Runtime | TorchScript CPU (ONNX Runtime planned) | PyTorch CPU now; ONNX Runtime, 4 threads planned |
+| | Wake word: ELKIT (deployed) | Intent: V4-B+ | Wake word: MARVIN V4 (alternative) |
+|---|---|---|---|
+| Accuracy | 91.1 % of "Hi/Hello Elkit" stitched from real speakers' words (800) | test: acc 0.957, macro-F1 0.940; holdout: acc 0.909, macro-F1 0.890 | F1 0.961, recall 0.944, precision 0.979 |
+| False-accept rate | **5.0 %** of 2,000 real SLURP utterances at 0.94 × 2 ([details](elkit/README.md)) | out-of-scope clips accepted: 15.8 % (12 / 76, test) at the 0.456 reject threshold | single clip: **0.037 %** (4 / 10,810); streaming replay: 0.032 %, recall 0.915 |
+| Latency p95 / RTF (Pi 5) | scored every 80 ms on the Pi | **193 ms / 0.03** for a 5 s command (intent + slot) | scored every 100 ms on the Pi |
+| Runtime (Pi 5) | ONNX Runtime | ONNX Runtime, 2 threads; 59 °C, no throttling | ONNX Runtime |
 
 ---
 
@@ -225,6 +230,8 @@ The V4-B baseline is about a third of V4-B+'s size. The comparison in `models/in
 ## Repository layout
 
 ```
+elkit/               ELKIT wake word: model description and test results (weights not redistributed)
+pi-benchmark/        Raspberry Pi 5 benchmark: script, ONNX models (MARVIN, intent, slot), measured result
 models/
   intent_v4b_plus/   best.pt, config.json, test/holdout metrics, comparison_vs_v4b.json,
                      split_manifest.json (exact train/validation indices), training_history.csv, training_log.txt
@@ -239,6 +246,7 @@ scripts/
   train_*.sh, slurm/*.slurm      retrain the released models
   prepare_demand_noise.py        decode DEMAND once to 16 kHz WAV
   export_v4b_plus_onnx.py, v4b_plus_frontend.py, benchmark_v4b_plus_pi.py, select_v4b_plus_reject_threshold.py
+  elkit_false_accept.py          ELKIT false-wake test on real speech (needs the ELKIT model)
 vcm-benchmark/       git submodule (airimonda/vcm-benchmark @ ab39857): intent list and Pi benchmark
 data_checksums.sha256
 ```
@@ -249,17 +257,18 @@ In the saved JSON files, paths on the training machine appear as `<PROJECT>` (th
 
 ## Limitations
 
-- **No on-device numbers yet.** Latency, RTF and memory on the Raspberry Pi 5 are still to be measured.
-- **The intent model has no out-of-scope rejection yet.** Any speech after "marvin" becomes one of the 19 intents. A validation-chosen confidence threshold is the next step.
+- **ELKIT still wakes on some ordinary speech** (5.0 % of real utterances at the deployed setting). It was trained on generated voices only; retraining with real speech as negatives is the next step. Its weights cannot be shared under this licence.
+- **Out-of-scope rejection is basic.** A confidence threshold rejects unknown commands, but 15.8 % of out-of-scope test clips are still accepted as one of the 19 intents.
 - **The intent data is mostly synthetic** (about 92 % of training clips are TTS). The drop from test (0.940) to the 4-speaker holdout (0.890) suggests real voices and rooms are harder.
-- **The wake-word streaming numbers come from replaying test clips padded with silence.** They are not a real-world false-accepts-per-hour rate.
+- **The MARVIN streaming numbers come from replaying test clips padded with silence.** They are not a real-world false-accepts-per-hour rate.
 - English only, 16 kHz input only. If your mic records at 48 kHz, resample to 16 kHz before feeding the models.
 
 ---
 
 ## Licences and citation
 
-- **Code and model weights:** MIT (see `LICENSE`).
+- **Code and model weights in this repository:** MIT (see `LICENSE`).
+- **ELKIT wake word:** not included. It was trained on generated voices from Piper and Meta MMS (non-commercial licences), so it is for research and class use only. Its front end is openWakeWord v0.5.1 (Apache-2.0).
 - **Datasets keep their own licences. They are not redistributed here; the scripts download them.**
   - ai231 voice commands: mixed sources, each with its own terms; research and education use (see its dataset card).
   - Speech Commands v0.02: CC BY 4.0. Warden, P. (2018). *Speech Commands: A Dataset for Limited-Vocabulary Speech Recognition.* arXiv:1804.03209.
