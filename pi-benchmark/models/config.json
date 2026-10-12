@@ -1,0 +1,147 @@
+{
+ "bundle": "MARVIN final (wake word + intent + slot), built 2026-10-06",
+ "sample_rate": 16000,
+ "wake": {
+  "name": "MARVIN V4",
+  "job": 64883,
+  "onnx": "marvin_v4.onnx",
+  "sha256": "663bc8d3ff4efdb880d2cbd1f0926679688bc9a5ad8b6e268e32d1de49f4f544",
+  "input": "log_mel float32 [N,1,40,97] (marvin_engine.features.wake_features of 1 s windows)",
+  "output": "logit [N,1] -> sigmoid = P(MARVIN)",
+  "streaming_threshold": 0.9094067811965942,
+  "clip_threshold": 0.8334565162658691,
+  "stride_ms": 100,
+  "consecutive_hits": 2,
+  "cooldown_ms": 1000,
+  "training_data": "Speech Commands v0.02 (official splits) + DEMAND + Speech Commands background noise"
+ },
+ "intent": {
+  "name": "VCM TC-DSCNN V4-B+",
+  "job": 64884,
+  "onnx": "intent_v4b_plus_64884.onnx",
+  "sha256": "127f681be4d89a9388727f1b049cdefe9e4aa9587136e0d0ce33864d315f28c4",
+  "classes": [
+   "ALARM",
+   "BRIGHTNESS",
+   "CALL",
+   "COLOR",
+   "CREATE_REMINDER",
+   "LIGHT_OFF",
+   "LIGHT_ON",
+   "LIST_REMINDERS",
+   "MESSAGE",
+   "NEXT",
+   "PAUSE",
+   "PLAY_MUSIC",
+   "STOP",
+   "TEMPERATURE",
+   "TIME",
+   "TIMER",
+   "VOLUME_DOWN",
+   "VOLUME_UP",
+   "WEATHER"
+  ],
+  "input": "log_mel float32 [1,1,64,T] + frame_lengths int64 [1] (marvin_engine.features.command_features, <= 5 s)",
+  "reject_threshold": 0.4564225599169734,
+  "reject_rule": "max softmax below threshold -> not a known command (keeps 95 % of in-scope VALIDATION commands)"
+ },
+ "slot": {
+  "name": "slot V0 + DEMAND",
+  "job": "65162_0",
+  "epoch": 112,
+  "onnx": "slot_v0_demand_65162.onnx",
+  "sha256": "3f91ac71b2ef2f68da8a1a24cc0c8505e7a8a07c1780fd5ceedb9f6c6a6a7862",
+  "classes": [
+   "TIMER|10 seconds",
+   "TIMER|30 seconds",
+   "TIMER|1 minute",
+   "ALARM|6:00 AM",
+   "ALARM|8:00 AM",
+   "ALARM|9:00 PM",
+   "TEMPERATURE|18 degrees",
+   "TEMPERATURE|22 degrees",
+   "TEMPERATURE|26 degrees",
+   "BRIGHTNESS|20 percent",
+   "BRIGHTNESS|60 percent",
+   "BRIGHTNESS|100 percent",
+   "COLOR|Red",
+   "COLOR|Blue",
+   "COLOR|Green",
+   "CREATE_REMINDER|Drink water",
+   "CREATE_REMINDER|Study",
+   "CREATE_REMINDER|Exercise"
+  ],
+  "slot_names": {
+   "TIMER": "duration",
+   "ALARM": "time",
+   "TEMPERATURE": "degrees",
+   "BRIGHTNESS": "percent",
+   "COLOR": "color",
+   "CREATE_REMINDER": "reminder"
+  },
+  "rule": "only the 3 values of the predicted intent compete (softmax over those 3 logits)"
+ },
+ "runtime": {
+  "vad_rms": 0.012,
+  "vad_silence_s": 0.55,
+  "max_command_s": 5.0,
+  "wake_guard_s": 0.25
+ },
+ "reported_metrics": {
+  "wake_test_speech_commands": {
+   "recall": 0.9435897435897436,
+   "false_accept_rate": 0.0003700277520814061,
+   "f1": 0.9608355091383811
+  },
+  "intent_validation": null,
+  "slot_validation": {
+   "n": 806,
+   "accuracy": 0.9875930521091811,
+   "macro_f1": 0.987016163364173,
+   "human_accuracy": 0.9506172839506173,
+   "synthetic_accuracy": 0.9917241379310345,
+   "n_human": 81,
+   "selection_score": 0.9711707109408259
+  },
+  "slot_test_clean": {
+   "n": 2538,
+   "accuracy": 0.9850275807722616,
+   "macro_f1": 0.9850353344546858,
+   "human_accuracy": 0.8996138996138996,
+   "synthetic_accuracy": 0.9947345326897762,
+   "n_human": 259,
+   "selection_score": 0.9471742161518379
+  },
+  "intent_reject": {
+   "rule": "5th percentile of in-scope validation max-softmax (accept 95% of validation commands)",
+   "threshold": 0.4564225599169734,
+   "validation": {
+    "in_scope_clips": 1478,
+    "oos_clips": 20,
+    "in_scope_accept_rate": 0.9499323410013532,
+    "in_scope_accuracy_all": 0.959404600811908,
+    "in_scope_correct_and_accepted": 0.9350473612990527,
+    "oos_false_accept_rate": 0.2
+   },
+   "pipeline_assumption": "runs after MARVIN wake word; rejected clips -> OUT_OF_SCOPE",
+   "test": {
+    "in_scope_clips": 4367,
+    "oos_clips": 76,
+    "in_scope_accept_rate": 0.9521410579345088,
+    "in_scope_accuracy_all": 0.9567208610029768,
+    "in_scope_correct_and_accepted": 0.9377146782688345,
+    "oos_false_accept_rate": 0.15789473684210525
+   },
+   "test_no_gate_oos_false_accept_rate": 1.0,
+   "holdout": {
+    "in_scope_clips": 186,
+    "oos_clips": 16,
+    "in_scope_accept_rate": 0.8978494623655914,
+    "in_scope_accuracy_all": 0.9086021505376344,
+    "in_scope_correct_and_accepted": 0.8548387096774194,
+    "oos_false_accept_rate": 0.1875
+   },
+   "holdout_no_gate_oos_false_accept_rate": 1.0
+  }
+ }
+}
